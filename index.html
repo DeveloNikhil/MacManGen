@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe by Nikhil Jha</title>
+    <!-- Nikhil Jha - Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Nikhil Jha - Custom CSS -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Nikhil Jha - Splash Screen Styling */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #343a40;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+        }
+        #mode-selection, #game-container {
+            display: none;
+        }
+        /* Nikhil Jha - Cell Styling */
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: transform 0.2s;
+            background-color: white;
+        }
+        .cell.x {
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+            transform: translateZ(10px);
+        }
+        .cell.o {
+            color: red;
+            text-shadow: 0 0 10px red, 0 0 20px red;
+            transform: translateZ(10px);
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        /* Nikhil Jha - Footer Styling */
+        #candidates {
+            position: fixed;
+            bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Nikhil Jha - Game Structure -->
+    <div id="splash-screen" class="text-center">
+        <h1>This game is built by Nikhil Jha</h1>
+    </div>
+    <div id="mode-selection" class="text-center">
+        <h2 class="mb-4">Choose Mode</h2>
+        <button class="btn btn-primary mb-2" onclick="startGame('friend')">Play with Friend</button>
+        <button class="btn btn-primary" onclick="startGame('bot')">Play with Bot</button>
+    </div>
+    <div id="game-container" class="text-center">
+        <div id="scoreboard" class="alert alert-info">X: 0 | O: 0</div>
+        <div id="board" class="mx-auto"></div>
+        <div id="candidates" class="text-muted">Candidates: Nikhil Jha</div>
+    </div>
+    <!-- Nikhil Jha - Popup Modal -->
+    <div class="modal fade" id="popup" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body">
+                    Aap Dhurv Jeet Chuke Ho💀
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="restartGame()">Restart</button>
+                    <button class="btn btn-danger" onclick="exitGame()">Exit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nikhil Jha - Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Nikhil Jha - Game Logic Start
+        const board = document.getElementById('board');
+        const scoreboard = document.getElementById('scoreboard');
+        const popup = new bootstrap.Modal(document.getElementById('popup'));
+        let cells = [];
+        let currentPlayer = 'X';
+        let gameActive = false;
+        let scores = { X: 0, O: 0 };
+        let mode = '';
+
+        // Nikhil Jha - Splash Screen Logic
+        setTimeout(() => {
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'block';
+        }, 2000);
+
+        // Nikhil Jha - Board Initialization
+        function initBoard() {
+            board.innerHTML = '';
+            cells = [];
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell', 'border');
+                cell.addEventListener('click', () => handleClick(i));
+                board.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+
+        // Nikhil Jha - Start Game Function
+        function startGame(selectedMode) {
+            mode = selectedMode;
+            document.getElementById('mode-selection').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            initBoard();
+            gameActive = true;
+            currentPlayer = 'X';
+        }
+
+        // Nikhil Jha - Handle Click Logic
+        function handleClick(index) {
+            if (!gameActive || cells[index].textContent) return;
+
+            cells[index].textContent = currentPlayer;
+            cells[index].classList.add(currentPlayer.toLowerCase());
+
+            if (checkWin()) {
+                scores[currentPlayer]++;
+                updateScoreboard();
+                showPopup();
+                gameActive = false;
+            } else if (cells.every(cell => cell.textContent)) {
+                gameActive = false;
+                showPopup();
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                if (mode === 'bot' && currentPlayer === 'O') botMove();
+            }
+        }
+
+        // Nikhil Jha - Bot Move Logic
+        function botMove() {
+            let emptyCells = cells.map((cell, i) => cell.textContent === '' ? i : null).filter(i => i !== null);
+            let randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            setTimeout(() => handleClick(randomIndex), 500);
+        }
+
+        // Nikhil Jha - Win Check Logic
+        function checkWin() {
+            const winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                [0, 4, 8], [2, 4, 6]             // Diagonals
+            ];
+            return winConditions.some(condition =>
+                condition.every(index => cells[index].textContent === currentPlayer)
+            );
+        }
+
+        // Nikhil Jha - Scoreboard Update
+        function updateScoreboard() {
+            scoreboard.textContent = `X: ${scores.X} | O: ${scores.O}`;
+        }
+
+        // Nikhil Jha - Popup Display
+        function showPopup() {
+            popup.show();
+        }
+
+        // Nikhil Jha - Restart Game
+        function restartGame() {
+            popup.hide();
+            initBoard();
+            gameActive = true;
+            currentPlayer = 'X';
+            if (mode === 'bot' && currentPlayer === 'O') botMove();
+        }
+
+        // Nikhil Jha - Exit Game
+        function exitGame() {
+            popup.hide();
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('mode-selection').style.display = 'block';
+            scores = { X: 0, O: 0 };
+            updateScoreboard();
+        }
+        // Nikhil Jha - Game Logic End
+    </script>
+</body>
+</html>
